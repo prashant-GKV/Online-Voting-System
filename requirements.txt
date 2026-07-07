@@ -1,5 +1,5 @@
 streamlit
-mysql-connector-python
+psycopg2-binary
 pandas
 altair
 bcrypt

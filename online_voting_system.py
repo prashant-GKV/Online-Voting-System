@@ -4,7 +4,7 @@ from html import escape as html_escape
 
 import altair as alt
 import bcrypt
-import mysql.connector
+import psycopg2
 import pandas as pd
 import streamlit as st
 
@@ -376,16 +376,25 @@ st.markdown(APP_CSS, unsafe_allow_html=True)
 
 @st.cache_resource
 def get_connection():
-    return mysql.connector.connect(
-        host=os.environ.get("MYSQL_HOST", "localhost"),
-        user=os.environ.get("MYSQL_USER", "root"),
-        password=os.environ.get("MYSQL_PASSWORD", "prashant@123"),
-        database=os.environ.get("MYSQL_DATABASE", "voting_system"),
-    )
+    # Prefer a single DATABASE_URL (Supabase / Neon give you one). Fall back to
+    # individual PG* variables, or local defaults for development.
+    database_url = os.environ.get("DATABASE_URL")
+    if database_url:
+        conn = psycopg2.connect(database_url)
+    else:
+        conn = psycopg2.connect(
+            host=os.environ.get("PGHOST", "localhost"),
+            port=os.environ.get("PGPORT", "5432"),
+            user=os.environ.get("PGUSER", "postgres"),
+            password=os.environ.get("PGPASSWORD", "postgres"),
+            dbname=os.environ.get("PGDATABASE", "voting_system"),
+            sslmode=os.environ.get("PGSSLMODE", "prefer"),
+        )
+    conn.autocommit = False
+    return conn
 
 
 db = get_connection()
-db.ping(reconnect=True, attempts=3, delay=1)
 cursor = db.cursor()
 
 
@@ -449,7 +458,7 @@ def record_vote(student_id, candidate_id, election_id):
         )
         db.commit()
         return True
-    except mysql.connector.IntegrityError:
+    except psycopg2.IntegrityError:
         db.rollback()
         return False
 
@@ -879,11 +888,12 @@ elif menu == "Admin":
                     )
                     db.commit()
                     cursor.execute(
-                        "INSERT INTO elections (election_name, election_status) VALUES (%s, %s)",
+                        "INSERT INTO elections (election_name, election_status) "
+                        "VALUES (%s, %s) RETURNING election_id",
                         (name.strip(), "Active"),
                     )
+                    election_id = cursor.fetchone()[0]
                     db.commit()
-                    election_id = cursor.lastrowid
 
                     for cname in cleaned_names:
                         cursor.execute(
@@ -971,7 +981,7 @@ elif menu == "Admin":
                 like = f"%{search}%"
                 cursor.execute(
                     "SELECT student_id, name, email, created_at FROM students "
-                    "WHERE student_id LIKE %s OR name LIKE %s OR email LIKE %s ORDER BY created_at DESC",
+                    "WHERE student_id ILIKE %s OR name ILIKE %s OR email ILIKE %s ORDER BY created_at DESC",
                     (like, like, like),
                 )
             else:
