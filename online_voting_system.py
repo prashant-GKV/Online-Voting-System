@@ -100,7 +100,13 @@ hr { border-color: #E2E8F0; }
     box-shadow: 0 6px 20px rgba(99, 102, 241, .20);
 }
 .stRadio label p { font-weight: 600; color: #1E293B; }
-.stRadio label > div:first-of-type { display: none; }
+/* Hide ONLY the radio circle, never the text label. Target the actual
+   radio control so newer Streamlit versions don't hide the label too. */
+.stRadio label > div[data-baseweb="radio"] > div:first-child,
+.stRadio label [data-testid="stRadioButtonInner"] { display: none; }
+/* Make sure the text label is always visible */
+.stRadio div[role="radiogroup"] > label > div:last-child,
+.stRadio div[role="radiogroup"] > label p { display: block !important; }
 
 /* ---------- radio: nav pills in sidebar ---------- */
 [data-testid="stSidebar"] .stRadio div[role="radiogroup"] { gap: 7px; }
@@ -124,7 +130,11 @@ hr { border-color: #E2E8F0; }
     box-shadow: 0 6px 16px rgba(99, 102, 241, .55);
     transform: none;
 }
-[data-testid="stSidebar"] .stRadio label p { color: #E0E7FF !important; font-weight: 600; }
+[data-testid="stSidebar"] .stRadio label p,
+[data-testid="stSidebar"] .stRadio label div[role="presentation"],
+[data-testid="stSidebar"] .stRadio div[role="radiogroup"] > label > div:last-child {
+    color: #E0E7FF !important; font-weight: 600;
+}
 
 /* ---------- buttons ---------- */
 .stButton > button, [data-testid="stFormSubmitButton"] > button {
