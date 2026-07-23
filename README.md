@@ -1,5 +1,7 @@
 # 🗳️ CampusVote — Online Voting System
 
+🔗 **Live demo:** [online-voting-system-for-students.streamlit.app](https://online-voting-system-for-students.streamlit.app/)
+
 A modern, secure web-based voting system for college and student elections, built with **Streamlit** and **MySQL**. Students register and cast one anonymous vote per election; admins create elections, monitor turnout live, and publish results with charts.
 
 > **Created by [Prashant Saini](https://github.com/prashant-GKV)** 👨‍💻
